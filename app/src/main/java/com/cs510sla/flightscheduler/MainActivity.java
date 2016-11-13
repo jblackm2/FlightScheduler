@@ -20,6 +20,7 @@ import ai.api.model.Result;
 import com.google.gson.JsonElement;
 import java.util.Map;
 
+import static com.cs510sla.flightscheduler.R.id.resultText;
 import static com.cs510sla.flightscheduler.R.id.text;
 
 public class MainActivity extends AppCompatActivity implements AIListener {
@@ -48,7 +49,7 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         listenButton = (Button) findViewById(R.id.speakButton);
         resultTextView = (TextView) findViewById(R.id.resultText);
 
-        final AIConfiguration config = new AIConfiguration("@keys/clientToken",
+        final AIConfiguration config = new AIConfiguration(getString(R.string.clientToken),
                 AIConfiguration.SupportedLanguages.English,
                 AIConfiguration.RecognitionEngine.System);
 
@@ -81,6 +82,7 @@ public class MainActivity extends AppCompatActivity implements AIListener {
     }
 
     public void listenButtonOnClick(final View view) {
+        resultTextView.setText(R.string.questionPrompt);
         aiService.startListening();
     }
 
@@ -99,7 +101,8 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         // Show results in TextView.
         resultTextView.setText("Query:" + result.getResolvedQuery() +
                 "\nAction: " + result.getAction() +
-                "\nParameters: " + parameterString);
+                "\nParameters: " + parameterString +
+                "\nText: " + result.getFulfillment().getSpeech());
 
     }
 
