@@ -248,7 +248,22 @@ public class MainActivity extends AppCompatActivity implements AIListener {
     }
 
     private void parseArrivals(Result result) {
+        HashSet<String> resSet = new HashSet();
+        Map<String, String> resMap = getParams(result);
 
+        if (resMap.containsKey("searchParam") && !resMap.get("searchParam").isEmpty() && resMap.get("searchParam") != null) {
+            resSet = locateInTable(resMap.get("searchCol"), resMap.get("searchParam"), ARRIVAL_CITY);
+            if (resSet.size() == 0) {
+                showResults("Your query has returned no results");
+            }
+            else{
+                showResults("You asked: " + result.getResolvedQuery() + "?" +
+                        "\nThe arrival cities that match your query are: " + resSet.toString());
+            }
+        }
+        else{
+            showResults("No parameters included in request.");
+        }
     }
 
 
