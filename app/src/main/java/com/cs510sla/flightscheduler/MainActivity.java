@@ -1,5 +1,6 @@
 package com.cs510sla.flightscheduler;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
 import android.support.design.widget.FloatingActionButton;
@@ -10,25 +11,36 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import ai.api.AIConfiguration;
+import ai.api.AIDataService;
 import ai.api.AIListener;
 import ai.api.AIService;
+import ai.api.AIServiceException;
 import ai.api.model.AIError;
+import ai.api.model.AIRequest;
 import ai.api.model.AIResponse;
 import ai.api.model.Result;
 import com.google.gson.JsonElement;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements AIListener {
 
     private Button listenButton;
+    private Button queryButton;
     private TextView resultTextView;
     private TextToSpeech tts;
+    private EditText queryText;
 
     private AIService aiService;
 
@@ -39,6 +51,11 @@ public class MainActivity extends AppCompatActivity implements AIListener {
     private static final int ARRIVAL_CITY = 4;
     private static final int ARRIVAL_TIME = 5;
     private static final int STATUS = 6;
+
+    AIDataService aiDataService;
+    AIRequest aiRequest;
+
+    private String[] paramArray = {"Airline", "FlightNumber", "DepartureCity", "DepartureTime", "ArrivalCity", "ArrivalTime", "Status"};
 
     private  String[][] table =
             {{"Airline", "FlightNumber", "DepartureCity", "DepartureTime", "ArrivalCity", "ArrivalTime", "Status"},
@@ -69,9 +86,10 @@ public class MainActivity extends AppCompatActivity implements AIListener {
             }
         });
 
-
         listenButton = (Button) findViewById(R.id.speakButton);
         resultTextView = (TextView) findViewById(R.id.resultText);
+        queryButton = (Button) findViewById(R.id.typedButton);
+        queryText = (EditText) findViewById(R.id.writtenQuery);
 
         final AIConfiguration config = new AIConfiguration(getString(R.string.clientToken),
                 AIConfiguration.SupportedLanguages.English,
@@ -80,23 +98,27 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         aiService = AIService.getService(this, config);
         aiService.setListener(this);
 
+         aiDataService = new AIDataService(this, config);
+         aiRequest = new AIRequest();
+
         tts = new TextToSpeech(MainActivity.this, new TextToSpeech.OnInitListener() {
             @Override
-            public void onInit(int i) {
-                if (i == TextToSpeech.SUCCESS){
+            public void onInit(int code) {
+                if (code == TextToSpeech.SUCCESS){
                     tts.setLanguage(Locale.US);
                 }
             }
         });
     }
 
+    //For the text input
+
+
     private void convertTTS(String text){
         if (text.length() > 0){
             tts.speak(text, TextToSpeech.QUEUE_FLUSH, null);
         }
-
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -121,12 +143,37 @@ public class MainActivity extends AppCompatActivity implements AIListener {
     }
 
     public void listenButtonOnClick(final View view) {
-
         showResults(getString(R.string.questionPrompt));
+
         while(tts.isSpeaking()){
             //no-op
         }
         aiService.startListening();
+    }
+
+    public void queryButtonOnClick(final View view) throws AIServiceException {
+
+        String text = String.valueOf(queryText.getText());
+        aiRequest.setQuery(text);
+
+        new AsyncTask<AIRequest, Void, AIResponse>() {
+            @Override
+            protected AIResponse doInBackground(AIRequest... requests) {
+                final AIRequest request = requests[0];
+                try {
+                    final AIResponse response = aiDataService.request(aiRequest);
+                    return response;
+                } catch (AIServiceException e) {
+                }
+                return null;
+            }
+            @Override
+            protected void onPostExecute(AIResponse aiResponse) {
+                if (aiResponse != null) {
+                    onResult(aiResponse);
+                }
+            }
+        }.execute(aiRequest);
     }
 
     @Override
@@ -159,8 +206,8 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         if (action.contains("flight_number")) {
             parseFlightNumber(result);
         }
-        else if(action.contains("airline")){
-
+        else if(action.equals("airlines")){
+            parseAirline(result);
         }
         else if(action.contains("flight_status")){
 
@@ -180,6 +227,35 @@ public class MainActivity extends AppCompatActivity implements AIListener {
 
     }
 
+    private void parseAirline(Result result) {
+        String searchParam = null;
+        String searchCol = null;
+        HashSet<String> resSet = new HashSet();
+
+        for(int i = 0; i < paramArray.length; i++){
+            if(result.getParameters().get(paramArray[i]) != null){
+                searchParam = result.getParameters().get(paramArray[i]).toString();
+                //Weird issue with an extra "" being in the String
+                searchParam = searchParam.substring(1,searchParam.length()-1);
+                searchCol = paramArray[i];
+            }
+        }
+
+        if (searchParam != null && !searchParam.isEmpty()) {
+            resSet = locateInTable(searchCol, searchParam, AIRLINE);
+            if (resSet.size() == 0) {
+                showResults("Your query has returned no results");
+            }
+            else{
+                showResults("The airlines that match your query are " + resSet.toString());
+            }
+        }
+        else{
+            showResults("No parameters included in request.");
+        }
+    }
+
+    //TODO: Need to be re-done to use new methods
     private void parseFlightNumber(Result result) {
         String flightNumber;
         String response;
@@ -188,13 +264,13 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         if (result.getParameters() != null && !result.getParameters().isEmpty()) {
             flightNumber = String.valueOf(result.getParameters().get("FlightNumber"));
             flightNumber = flightNumber.substring(1,flightNumber.length()-1); //For some reason and extra "" is put around flightNumber
-            if (flightNumber != null && !flightNumber.isEmpty()) {
+            if (!flightNumber.isEmpty()) {
                 //This assumes that there is only one additional parameter, and it is the answer we want to find in the table
                 String searchTerm = text.substring(text.lastIndexOf("@") + 1);
                 //Replace param in string with the actual data
                 response = text.replace("@FlightNumber", flightNumber);
                                                                 //Look in the table for the data we want for the given flight number
-                response = response.replace("@" + searchTerm, locateInTable(searchTerm, flightNumber));
+                //response = response.replace("@" + searchTerm, locateInTable(searchTerm, flightNumber));
 
                 //Display results to user and say it
                 showResults(response);
@@ -209,30 +285,33 @@ public class MainActivity extends AppCompatActivity implements AIListener {
 
     }
 
-    private CharSequence locateInTable(String searchTerm, String itemInRow) {
-        int colIndex = 0;
-        int rowIndex = 0;
+    private HashSet locateInTable(String searchColumn, String itemToSearchFor, int colToGetResultsFrom) {
+        HashSet<String> resSet = new HashSet<>();
+        int columnMatch = 0;
 
-        //finds the column for the data we need, and the row where we should look
-        for(int i = 0; i < 11; i++){
-            for(int j = 0; j < 7; j++)
-                if(table[i][j].contains(searchTerm)){
-                    colIndex = j;
-                }
-                else if(table[i][j].contains(itemInRow)){
-                    rowIndex = i;
-                }
+        //finds the column for the data we need
+        for (int i = 0; i < 7; i++){
+            if (table[0][i].contains(searchColumn)) {
+                columnMatch = i;
+                break;
+            }
+            else{
+                //TODO:return some error
+            }
         }
-        System.out.println(rowIndex + " " + colIndex);
+        for (int i = 0; i < 11; i++) {
+            if (table[i][columnMatch].contains(itemToSearchFor)) {
+                resSet.add(table[i][colToGetResultsFrom]);
+            }
+        }
 
         //This should be the data we need to finish the response to the user
-        return table[rowIndex][colIndex];
+        return resSet;
     }
 
     private void showResults(String response) {
         resultTextView.setText(response);
         convertTTS(response);
-
     }
 
     @Override

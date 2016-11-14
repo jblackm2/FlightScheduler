@@ -16,6 +16,9 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
+        debug {
+            debuggable true
+        }
     }
 }
 
@@ -30,5 +33,7 @@ dependencies {
     compile 'ai.api:sdk:1.10.0@aar'
     compile 'com.android.support:appcompat-v7:25.0.0'
     compile 'com.google.code.gson:gson:2.8.0'
-    compile 'commons-io:commons-io:20030203.000550'
+    compile 'commons-io:commons-io:2.4'
+    //compile 'commons-io:commons-io:20030203.000550'
+    //compile 'org.apache.directory.studio:org.apache.commons.io:2.4'
 }

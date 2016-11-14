@@ -13,16 +13,8 @@
     tools:context="com.cs510sla.flightscheduler.MainActivity"
     tools:showIn="@layout/activity_main">
 
-    <Button
-        android:text="@string/speak"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true"
-        android:id="@+id/speakButton" />
-
     <TextView
-        android:text='""'
+        android:text=''
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/speakButton"
@@ -33,4 +25,38 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_alignParentBottom="true" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:ems="10"
+        android:layout_below="@+id/speakButton"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="12dp"
+        android:id="@+id/writtenQuery"
+        android:hint="Type query, or press speak" />
+
+    <Button
+        android:text="@string/speak"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/speakButton"
+        android:onClick="listenButtonOnClick"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginLeft="15dp"
+        android:layout_marginStart="15dp" />
+
+    <Button
+        android:text="Press to type query"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/typedButton"
+        android:onClick="queryButtonOnClick"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true" />
 </RelativeLayout>
