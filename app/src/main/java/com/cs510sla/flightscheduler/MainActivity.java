@@ -77,15 +77,6 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
-
         listenButton = (Button) findViewById(R.id.speakButton);
         resultTextView = (TextView) findViewById(R.id.resultText);
         queryButton = (Button) findViewById(R.id.typedButton);
@@ -109,10 +100,9 @@ public class MainActivity extends AppCompatActivity implements AIListener {
                 }
             }
         });
+        //Greeting message
+        convertTTS("Welcome to Flight Scheduler. You can choose to either say your query, or speak it.");
     }
-
-    //For the text input
-
 
     private void convertTTS(String text){
         if (text.length() > 0){
@@ -191,39 +181,32 @@ public class MainActivity extends AppCompatActivity implements AIListener {
                 parameterString += "(" + entry.getKey() + ", " + entry.getValue() + ") ";
             }
         }
-        // Show results in TextView.
-        /*resultTextView.setText("Query:" + result.getResolvedQuery() +
-                "\nAction: " + result.getAction() +
-                "\nParameters: " + parameterString +
-                "\nText: " + result.getFulfillment().getSpeech());*/
-
     }
 
     private void parseAction(Result result) {
 
         String action = result.getAction();
 
-        if (action.contains("flight_number")) {
+        if (action.equals("flight_number")) {
             parseFlightNumber(result);
         }
         else if(action.equals("airlines")){
             parseAirline(result);
         }
-        else if(action.contains("flight_status")){
-
+        else if(action.equals("flight_status")){
+            parseFlightStatus(result);
         }
-        else if(action.contains("departure_city")){
-
+        else if(action.equals("departures_city")){
+            parseDeparturesCity(result);
         }
-        else if(action.equals("arrivals")){
-            parseArrivals(result);
-
+        else if(action.equals("arrivals_city")){
+            parseArrivalsCity(result);
         }
-        else if(action.contains("departure_time")){
-
+        else if(action.equals("departures_time")){
+            parseDeparturesTime(result);
         }
-        else if(action.contains("arrival_time")){
-
+        else if(action.equals("arrivals_time")){
+            parseArrivalsTime(result);
         }
 
     }
@@ -247,14 +230,91 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         return searchMap;
     }
 
-    private void parseArrivals(Result result) {
+    private void parseDeparturesCity(Result result) {
+        HashSet<String> resSet = new HashSet();
+        Map<String, String> resMap = getParams(result);
+
+        if (resMap.containsKey("searchParam") && !resMap.get("searchParam").isEmpty() && resMap.get("searchParam") != null) {
+            resSet = locateInTable(resMap.get("searchCol"), resMap.get("searchParam"), DEPARTURE_CITY);
+            if (resSet.size() == 0) {
+                noResultsError(result.getResolvedQuery());
+            }
+            else{
+                showResults("You asked: " + result.getResolvedQuery() + "?" +
+                        "\nThe cities that match your query are: " + resSet.toString());
+            }
+        }
+        else{
+            noParamError();
+        }
+    }
+
+    private void parseDeparturesTime(Result result) {
+        HashSet<String> resSet = new HashSet();
+        Map<String, String> resMap = getParams(result);
+
+        if (resMap.containsKey("searchParam") && !resMap.get("searchParam").isEmpty() && resMap.get("searchParam") != null) {
+            resSet = locateInTable(resMap.get("searchCol"), resMap.get("searchParam"), DEPARTURE_TIME);
+            if (resSet.size() == 0) {
+                noResultsError(result.getResolvedQuery());
+            }
+            else{
+                showResults("You asked: " + result.getResolvedQuery() + "?" +
+                        "\nThe flight departure time that matches your query is: " + resSet.toString());
+            }
+        }
+        else{
+            noParamError();
+        }
+    }
+
+    private void parseArrivalsTime(Result result) {
+        HashSet<String> resSet = new HashSet();
+        Map<String, String> resMap = getParams(result);
+
+        if (resMap.containsKey("searchParam") && !resMap.get("searchParam").isEmpty() && resMap.get("searchParam") != null) {
+            resSet = locateInTable(resMap.get("searchCol"), resMap.get("searchParam"), ARRIVAL_TIME);
+            if (resSet.size() == 0) {
+                noResultsError(result.getResolvedQuery());
+            }
+            else{
+                showResults("You asked: " + result.getResolvedQuery() + "?" +
+                        "\nThe flight arrival time that matches your query is: " + resSet.toString());
+            }
+        }
+        else{
+            noParamError();
+        }
+    }
+
+    //TODO: Untested, need intents
+    private void parseFlightStatus(Result result) {
+        HashSet<String> resSet = new HashSet();
+        Map<String, String> resMap = getParams(result);
+
+        if (resMap.containsKey("searchParam") && !resMap.get("searchParam").isEmpty() && resMap.get("searchParam") != null) {
+            resSet = locateInTable(resMap.get("searchCol"), resMap.get("searchParam"), STATUS);
+            if (resSet.size() == 0) {
+                noResultsError(result.getResolvedQuery());
+            }
+            else{
+                showResults("You asked: " + result.getResolvedQuery() + "?" +
+                        "\nThe flight status that matches your query are: " + resSet.toString());
+            }
+        }
+        else{
+            noParamError();
+        }
+    }
+
+    private void parseArrivalsCity(Result result) {
         HashSet<String> resSet = new HashSet();
         Map<String, String> resMap = getParams(result);
 
         if (resMap.containsKey("searchParam") && !resMap.get("searchParam").isEmpty() && resMap.get("searchParam") != null) {
             resSet = locateInTable(resMap.get("searchCol"), resMap.get("searchParam"), ARRIVAL_CITY);
             if (resSet.size() == 0) {
-                showResults("Your query has returned no results");
+                noResultsError(result.getResolvedQuery());
             }
             else{
                 showResults("You asked: " + result.getResolvedQuery() + "?" +
@@ -262,7 +322,7 @@ public class MainActivity extends AppCompatActivity implements AIListener {
             }
         }
         else{
-            showResults("No parameters included in request.");
+            noParamError();
         }
     }
 
@@ -275,7 +335,7 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         if (resMap.containsKey("searchParam") && !resMap.get("searchParam").isEmpty() && resMap.get("searchParam") != null) {
             resSet = locateInTable(resMap.get("searchCol"), resMap.get("searchParam"), AIRLINE);
             if (resSet.size() == 0) {
-                showResults("Your query has returned no results");
+                noResultsError(result.getResolvedQuery());
             }
             else{
                 showResults("You asked: " + result.getResolvedQuery() + "?" +
@@ -283,36 +343,27 @@ public class MainActivity extends AppCompatActivity implements AIListener {
             }
         }
         else{
-            showResults("No parameters included in request.");
+            noParamError();
         }
     }
 
     //TODO: Need to be re-done to use new methods
     private void parseFlightNumber(Result result) {
-        String flightNumber;
-        String response;
-        String text = result.getFulfillment().getSpeech();
+        HashSet<String> resSet = new HashSet();
+        Map<String, String> resMap = getParams(result);
 
-        if (result.getParameters() != null && !result.getParameters().isEmpty()) {
-            flightNumber = String.valueOf(result.getParameters().get("FlightNumber"));
-            flightNumber = flightNumber.substring(1,flightNumber.length()-1); //For some reason and extra "" is put around flightNumber
-            if (!flightNumber.isEmpty()) {
-                //This assumes that there is only one additional parameter, and it is the answer we want to find in the table
-                String searchTerm = text.substring(text.lastIndexOf("@") + 1);
-                //Replace param in string with the actual data
-                response = text.replace("@FlightNumber", flightNumber);
-                                                                //Look in the table for the data we want for the given flight number
-                //response = response.replace("@" + searchTerm, locateInTable(searchTerm, flightNumber));
-
-                //Display results to user and say it
-                showResults(response);
+        if (resMap.containsKey("searchParam") && !resMap.get("searchParam").isEmpty() && resMap.get("searchParam") != null) {
+            resSet = locateInTable(resMap.get("searchCol"), resMap.get("searchParam"), FLIGHT_NUMBER);
+            if (resSet.size() == 0) {
+                noResultsError(result.getResolvedQuery());
             }
             else{
-                showResults("No key found");
+                showResults("You asked: " + result.getResolvedQuery() + "?" +
+                        "\nThe flight numbers that match your query are: " + resSet.toString());
             }
         }
         else{
-            showResults("No parameters included in request.");
+            noParamError();
         }
 
     }
@@ -339,6 +390,14 @@ public class MainActivity extends AppCompatActivity implements AIListener {
 
         //This should be the data we need to finish the response to the user
         return resSet;
+    }
+
+    private void noParamError(){
+        showResults("No parameters included in request.");
+    }
+
+    private void noResultsError(String query) {
+        showResults("Your query " + query + "has returned no results");
     }
 
     private void showResults(String response) {
