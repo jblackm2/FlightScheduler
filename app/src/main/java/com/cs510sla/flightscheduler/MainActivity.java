@@ -187,13 +187,17 @@ public class MainActivity extends AppCompatActivity implements AIListener {
 
         if (result.getParameters() != null && !result.getParameters().isEmpty()) {
             flightNumber = String.valueOf(result.getParameters().get("FlightNumber"));
-            flightNumber = flightNumber.substring(1,flightNumber.length()-1);
+            flightNumber = flightNumber.substring(1,flightNumber.length()-1); //For some reason and extra "" is put around flightNumber
             if (flightNumber != null && !flightNumber.isEmpty()) {
+                //This assumes that there is only one additional parameter, and it is the answer we want to find in the table
                 String searchTerm = text.substring(text.lastIndexOf("@") + 1);
+                //Replace param in string with the actual data
                 response = text.replace("@FlightNumber", flightNumber);
+                                                                //Look in the table for the data we want for the given flight number
                 response = response.replace("@" + searchTerm, locateInTable(searchTerm, flightNumber));
-                showResults(response);
 
+                //Display results to user and say it
+                showResults(response);
             }
             else{
                 showResults("No key found");
