@@ -215,7 +215,8 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         else if(action.contains("departure_city")){
 
         }
-        else if(action.contains("arrival_city")){
+        else if(action.equals("arrivals")){
+            parseArrivals(result);
 
         }
         else if(action.contains("departure_time")){
@@ -227,10 +228,11 @@ public class MainActivity extends AppCompatActivity implements AIListener {
 
     }
 
-    private void parseAirline(Result result) {
+    //Method to get parmeter from the API.ai response, and determine which column to search in
+    private Map<String, String> getParams(Result result) {
         String searchParam = null;
         String searchCol = null;
-        HashSet<String> resSet = new HashSet();
+        Map<String,String> searchMap = new HashMap<>();
 
         for(int i = 0; i < paramArray.length; i++){
             if(result.getParameters().get(paramArray[i]) != null){
@@ -238,16 +240,31 @@ public class MainActivity extends AppCompatActivity implements AIListener {
                 //Weird issue with an extra "" being in the String
                 searchParam = searchParam.substring(1,searchParam.length()-1);
                 searchCol = paramArray[i];
+                searchMap.put("searchCol", searchCol);
+                searchMap.put("searchParam", searchParam);
             }
         }
+        return searchMap;
+    }
 
-        if (searchParam != null && !searchParam.isEmpty()) {
-            resSet = locateInTable(searchCol, searchParam, AIRLINE);
+    private void parseArrivals(Result result) {
+
+    }
+
+
+
+    private void parseAirline(Result result) {
+        HashSet<String> resSet = new HashSet();
+        Map<String, String> resMap = getParams(result);
+
+        if (resMap.containsKey("searchParam") && !resMap.get("searchParam").isEmpty() && resMap.get("searchParam") != null) {
+            resSet = locateInTable(resMap.get("searchCol"), resMap.get("searchParam"), AIRLINE);
             if (resSet.size() == 0) {
                 showResults("Your query has returned no results");
             }
             else{
-                showResults("The airlines that match your query are " + resSet.toString());
+                showResults("You asked: " + result.getResolvedQuery() + "?" +
+                        "\nThe airlines that match your query are: " + resSet.toString());
             }
         }
         else{
