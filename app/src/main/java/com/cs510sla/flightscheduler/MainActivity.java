@@ -55,10 +55,10 @@ public class MainActivity extends AppCompatActivity implements AIListener {
     AIDataService aiDataService;
     AIRequest aiRequest;
 
-    private String[] paramArray = {"Airline", "FlightNumber", "DepartureCity", "DepartureTime", "ArrivalCity", "ArrivalTime", "Status"};
+    private String[] paramArray = {"Airline", "FlightNumber", "DepartureCity", "DepartureTime", "ArrivalCity", "ArrivalTime", "status"};
 
     private  String[][] table =
-            {{"Airline", "FlightNumber", "DepartureCity", "DepartureTime", "ArrivalCity", "ArrivalTime", "Status"},
+            {{"Airline", "FlightNumber", "DepartureCity", "DepartureTime", "ArrivalCity", "ArrivalTime", "status"},
                     {"AjaxAir", "113", "Portland", "8:03 AM", "Atlanta", "12:52 PM", "landed"},
                     {"AjaxAir", "114", "Atlanta", "2:05 PM", "Portland", "4:44 PM", "boarding"},
                     {"BakerAir", "121", "Atlanta", "5:14 PM", "New York", "7:20 PM", "departed"},
