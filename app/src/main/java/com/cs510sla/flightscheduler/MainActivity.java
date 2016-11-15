@@ -33,6 +33,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class MainActivity extends AppCompatActivity implements AIListener {
 
@@ -59,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements AIListener {
 
     private  String[][] table =
             {{"Airline", "FlightNumber", "DepartureCity", "DepartureTime", "ArrivalCity", "ArrivalTime", "status"},
-                    {"AjaxAir", "113", "Portland", "8:03 AM", "Atlanta", "12:52 PM", "landed"},
+                    {"AjaxAir", "113", "Portland", "8:03 AM", "Atlanta", "12:51 PM", "landed"},
                     {"AjaxAir", "114", "Atlanta", "2:05 PM", "Portland", "4:44 PM", "boarding"},
                     {"BakerAir", "121", "Atlanta", "5:14 PM", "New York", "7:20 PM", "departed"},
                     {"BakerAir", "122", "New York", "9:00 PM", "Portland", "12:13 AM", "scheduled"},
@@ -145,7 +147,9 @@ public class MainActivity extends AppCompatActivity implements AIListener {
     public void queryButtonOnClick(final View view) throws AIServiceException {
 
         String text = String.valueOf(queryText.getText());
-        aiRequest.setQuery(text);
+        if(text !=null && !text.isEmpty()){
+            aiRequest.setQuery(text);
+        }
 
         new AsyncTask<AIRequest, Void, AIResponse>() {
             @Override
@@ -194,7 +198,7 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         else if(action.equals("airlines")){
             parseAirline(result);
         }
-        else if(action.equals("flight_status")){
+        else if(action.equals("status")){
             parseFlightStatus(result);
         }
         else if(action.equals("departures_city")){
@@ -203,10 +207,10 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         else if(action.equals("arrivals_city")){
             parseArrivalsCity(result);
         }
-        else if(action.equals("departures_time")){
+        else if(action.equals("departure_time")){
             parseDeparturesTime(result);
         }
-        else if(action.equals("arrivals_time")){
+        else if(action.equals("arrival_time")){
             parseArrivalsTime(result);
         }
 
@@ -224,19 +228,21 @@ public class MainActivity extends AppCompatActivity implements AIListener {
                 //Weird issue with an extra "" being in the String
                 searchParam = searchParam.substring(1,searchParam.length()-1);
                 searchCol = paramArray[i];
-                searchMap.put("searchCol", searchCol);
-                searchMap.put("searchParam", searchParam);
+                //searchMap.put("searchCol", searchCol);
+                //searchMap.put("searchParam", searchParam);
+                searchMap.put(searchCol, searchParam);
             }
         }
         return searchMap;
     }
 
     private void parseDeparturesCity(Result result) {
-        HashSet<String> resSet = new HashSet();
+        Set<String> resSet = new HashSet();
         Map<String, String> resMap = getParams(result);
 
-        if (resMap.containsKey("searchParam") && !resMap.get("searchParam").isEmpty() && resMap.get("searchParam") != null) {
-            resSet = locateInTable(resMap.get("searchCol"), resMap.get("searchParam"), DEPARTURE_CITY);
+        if (!resMap.isEmpty()) {
+
+            resSet = locateInTable(resMap, DEPARTURE_CITY);
             if (resSet.size() == 0) {
                 noResultsError(result.getResolvedQuery());
             }
@@ -251,11 +257,11 @@ public class MainActivity extends AppCompatActivity implements AIListener {
     }
 
     private void parseDeparturesTime(Result result) {
-        HashSet<String> resSet = new HashSet();
+        Set<String> resSet = new HashSet();
         Map<String, String> resMap = getParams(result);
 
-        if (resMap.containsKey("searchParam") && !resMap.get("searchParam").isEmpty() && resMap.get("searchParam") != null) {
-            resSet = locateInTable(resMap.get("searchCol"), resMap.get("searchParam"), DEPARTURE_TIME);
+        if (!resMap.isEmpty()) {
+            resSet = locateInTable(resMap, DEPARTURE_TIME);
             if (resSet.size() == 0) {
                 noResultsError(result.getResolvedQuery());
             }
@@ -270,11 +276,11 @@ public class MainActivity extends AppCompatActivity implements AIListener {
     }
 
     private void parseArrivalsTime(Result result) {
-        HashSet<String> resSet = new HashSet();
+        Set<String> resSet = new HashSet();
         Map<String, String> resMap = getParams(result);
 
-        if (resMap.containsKey("searchParam") && !resMap.get("searchParam").isEmpty() && resMap.get("searchParam") != null) {
-            resSet = locateInTable(resMap.get("searchCol"), resMap.get("searchParam"), ARRIVAL_TIME);
+        if (!resMap.isEmpty()) {
+            resSet = locateInTable(resMap, ARRIVAL_TIME);
             if (resSet.size() == 0) {
                 noResultsError(result.getResolvedQuery());
             }
@@ -290,11 +296,11 @@ public class MainActivity extends AppCompatActivity implements AIListener {
 
     //TODO: Untested, need intents
     private void parseFlightStatus(Result result) {
-        HashSet<String> resSet = new HashSet();
+        Set<String> resSet = new HashSet();
         Map<String, String> resMap = getParams(result);
 
-        if (resMap.containsKey("searchParam") && !resMap.get("searchParam").isEmpty() && resMap.get("searchParam") != null) {
-            resSet = locateInTable(resMap.get("searchCol"), resMap.get("searchParam"), STATUS);
+        if (!resMap.isEmpty()) {
+            resSet = locateInTable(resMap, STATUS);
             if (resSet.size() == 0) {
                 noResultsError(result.getResolvedQuery());
             }
@@ -309,11 +315,11 @@ public class MainActivity extends AppCompatActivity implements AIListener {
     }
 
     private void parseArrivalsCity(Result result) {
-        HashSet<String> resSet = new HashSet();
+        Set<String> resSet = new HashSet();
         Map<String, String> resMap = getParams(result);
 
-        if (resMap.containsKey("searchParam") && !resMap.get("searchParam").isEmpty() && resMap.get("searchParam") != null) {
-            resSet = locateInTable(resMap.get("searchCol"), resMap.get("searchParam"), ARRIVAL_CITY);
+        if (!resMap.isEmpty()) {
+            resSet = locateInTable(resMap, ARRIVAL_CITY);
             if (resSet.size() == 0) {
                 noResultsError(result.getResolvedQuery());
             }
@@ -327,14 +333,12 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         }
     }
 
-
-
     private void parseAirline(Result result) {
-        HashSet<String> resSet = new HashSet();
+        Set<String> resSet = new HashSet();
         Map<String, String> resMap = getParams(result);
 
-        if (resMap.containsKey("searchParam") && !resMap.get("searchParam").isEmpty() && resMap.get("searchParam") != null) {
-            resSet = locateInTable(resMap.get("searchCol"), resMap.get("searchParam"), AIRLINE);
+        if (!resMap.isEmpty()) {
+            resSet = locateInTable(resMap, AIRLINE);
             if (resSet.size() == 0) {
                 noResultsError(result.getResolvedQuery());
             }
@@ -348,13 +352,12 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         }
     }
 
-    //TODO: Need to be re-done to use new methods
     private void parseFlightNumber(Result result) {
-        HashSet<String> resSet = new HashSet();
+        Set<String> resSet = new HashSet();
         Map<String, String> resMap = getParams(result);
 
-        if (resMap.containsKey("searchParam") && !resMap.get("searchParam").isEmpty() && resMap.get("searchParam") != null) {
-            resSet = locateInTable(resMap.get("searchCol"), resMap.get("searchParam"), FLIGHT_NUMBER);
+        if (!resMap.isEmpty()) {
+            resSet = locateInTable(resMap, FLIGHT_NUMBER);
             if (resSet.size() == 0) {
                 noResultsError(result.getResolvedQuery());
             }
@@ -369,9 +372,47 @@ public class MainActivity extends AppCompatActivity implements AIListener {
 
     }
 
-    private HashSet locateInTable(String searchColumn, String itemToSearchFor, int colToGetResultsFrom) {
-        HashSet<String> resSet = new HashSet<>();
+    private Set<String> locateInTable(Map<String, String> map, int colToGetResultsFrom) {
+        Set<String> resSet = new HashSet<>();
         int columnMatch = 0;
+        ArrayList<Set<String>> setArrayList = new ArrayList<>();
+        Set<String> test = new HashSet<>();
+
+
+        for ( Map.Entry<String, String> entry : map.entrySet()) {
+            String key = entry.getKey();
+            String val = entry.getValue();
+
+            for (int i = 0; i < 7; i++) {
+                if (table[0][i].contains(key)) {
+                    columnMatch = i;
+                    break;
+                } else {
+                    //TODO:return some error
+                }
+            }
+            //Multi-parameter queries
+            for (int i = 0; i < 11; i++) {
+                String matchCheck = table[i][colToGetResultsFrom];
+                if (table[i][columnMatch].contains(val)) {
+
+                    if(map.size() > 1){
+                        if(resSet.contains(matchCheck)){
+                            test.add(matchCheck);
+                        }
+                    }
+                    resSet.add(matchCheck);
+                }
+            }
+
+            //setArrayList.add(resSet);
+        }
+        if(!test.isEmpty()) {
+            resSet = test;
+        }
+        return resSet;
+
+        /*int columnMatch = 0;
 
         //finds the column for the data we need
         for (int i = 0; i < 7; i++){
@@ -390,7 +431,7 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         }
 
         //This should be the data we need to finish the response to the user
-        return resSet;
+        return resSet;*/
     }
 
     private void noParamError(){
