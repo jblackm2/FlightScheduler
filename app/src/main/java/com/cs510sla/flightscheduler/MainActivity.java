@@ -98,10 +98,11 @@ public class MainActivity extends AppCompatActivity implements AIListener {
                 if (code == TextToSpeech.SUCCESS){
                     tts.setLanguage(Locale.US);
                 }
+                //Greeting message
+                convertTTS("Welcome to Flight Scheduler. You can choose to either say your query, or type it.");
             }
         });
-        //Greeting message
-        convertTTS("Welcome to Flight Scheduler. You can choose to either say your query, or speak it.");
+
     }
 
     private void convertTTS(String text){
@@ -133,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements AIListener {
     }
 
     public void listenButtonOnClick(final View view) {
-        showResults(getString(R.string.questionPrompt));
+        convertTTS(getString(R.string.questionPrompt));
 
         while(tts.isSpeaking()){
             //no-op
@@ -397,7 +398,7 @@ public class MainActivity extends AppCompatActivity implements AIListener {
     }
 
     private void noResultsError(String query) {
-        showResults("Your query " + query + "has returned no results");
+        showResults("Your query " + query + " has returned no results");
     }
 
     private void showResults(String response) {
@@ -407,7 +408,9 @@ public class MainActivity extends AppCompatActivity implements AIListener {
 
     @Override
     public void onError(AIError error) {
-        resultTextView.setText(error.toString());
+        showResults(error.toString());
+        aiService.setListener(this);
+
     }
 
     @Override
