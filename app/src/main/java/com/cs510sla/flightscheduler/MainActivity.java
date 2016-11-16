@@ -25,6 +25,7 @@ import com.google.gson.JsonElement;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
@@ -359,7 +360,8 @@ public class MainActivity extends AppCompatActivity implements AIListener {
                 }
             }
             else{
-                resSet = locateInTable(resMap, STATUS);
+                //resSet = locateInTable(resMap, STATUS);
+                resSet = statusSpecial(resMap, STATUS);
                 if (resSet.size() == 0) {
                     noResultsError(result.getResolvedQuery());
                 }
@@ -432,6 +434,40 @@ public class MainActivity extends AppCompatActivity implements AIListener {
 
     }
 
+    private Set<String> statusSpecial(Map<String, String> map, int colToGetResultsFrom){
+        Set<String> resSet = new HashSet<>();
+        ArrayList columns = new ArrayList<>();
+        ArrayList rows = new ArrayList();
+        for ( Map.Entry<String, String> entry : map.entrySet()) {
+            String key = entry.getKey();
+            String val = entry.getValue();
+            int col = 0;
+            for (int i = 0; i < 7; i++){
+                if (table[0][i].contains(key)) {
+                    col = i;
+                    columns.add(i);
+                    break;
+                }
+            }
+            for(int i = 0; i < 11; i++){
+                if(table[i][col].contains(val)){
+                    rows.add(i);
+                }
+            }
+        }
+
+        for(int i = 0; i < rows.size(); i++){
+            int duplicateCheck = 0;
+            duplicateCheck = Collections.frequency(rows,rows.get(i));
+
+            if (duplicateCheck > 1 || map.size() == 1) {
+                resSet.add(table[(int) rows.get(i)][colToGetResultsFrom]);
+            }
+        }
+
+        return resSet;
+    }
+
     private Set<String> locateInTable(Map<String, String> map, int colToGetResultsFrom) {
         Set<String> resSet = new HashSet<>();
         Set<String> temp = new HashSet();
@@ -474,11 +510,15 @@ public class MainActivity extends AppCompatActivity implements AIListener {
                     }
                 }
             }
+            //So that in a 3 param query, the first filtered set becomes the new set to check against
             if(!temp.isEmpty()){
                 resSet = temp;
             }
-        }
+        }/*
         if(!test.isEmpty()) {
+            resSet = test;
+        }*/
+        if(map.size() > 1){
             resSet = test;
         }
         return resSet;
