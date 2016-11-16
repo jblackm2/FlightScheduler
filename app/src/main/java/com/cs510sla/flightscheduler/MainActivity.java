@@ -3,8 +3,6 @@ package com.cs510sla.flightscheduler;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.speech.tts.TextToSpeech;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
@@ -25,18 +23,13 @@ import ai.api.model.AIResponse;
 import ai.api.model.Result;
 import com.google.gson.JsonElement;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 public class MainActivity extends AppCompatActivity implements AIListener {
 
@@ -218,9 +211,7 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         else if(action.equals("next")){
             parseNext(result);
         }
-
     }
-
 
     //Method to get parmeter from the API.ai response, and determine which column to search in
     private Map<String, String> getParams(Result result) {
@@ -228,14 +219,12 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         String searchCol = null;
         Map<String,String> searchMap = new HashMap<>();
 
-        for(int i = 0; i < paramArray.length; i++){
-            if(result.getParameters().get(paramArray[i]) != null){
-                searchParam = result.getParameters().get(paramArray[i]).toString();
+        for (String item : paramArray) {
+            if (result.getParameters().get(item) != null) {
+                searchParam = result.getParameters().get(item).toString();
                 //Weird issue with an extra "" being in the String
-                searchParam = searchParam.substring(1,searchParam.length()-1);
-                searchCol = paramArray[i];
-                //searchMap.put("searchCol", searchCol);
-                //searchMap.put("searchParam", searchParam);
+                searchParam = searchParam.substring(1, searchParam.length() - 1);
+                searchCol = item;
                 searchMap.put(searchCol, searchParam);
             }
         }
@@ -252,6 +241,7 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         }
         return resSet;
     }
+
     private void parseNext(Result result) {
         Set<String> resSet = new HashSet();
         Map<String, String> resMap = getParams(result);
@@ -287,7 +277,6 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         else{
             noParamError();
         }
-
     }
 
     private void parseDeparturesCity(Result result) {
@@ -302,7 +291,7 @@ public class MainActivity extends AppCompatActivity implements AIListener {
             }
             else{
                 showResults("You asked: " + result.getResolvedQuery() + "?" +
-                        "\nThe cities that match your query are: " + resSet.toString());
+                        "\nThe departure cities that match your query are: " + resSet.toString());
             }
         }
         else{
@@ -445,14 +434,15 @@ public class MainActivity extends AppCompatActivity implements AIListener {
 
     private Set<String> locateInTable(Map<String, String> map, int colToGetResultsFrom) {
         Set<String> resSet = new HashSet<>();
+        Set<String> temp = new HashSet();
         int columnMatch = 0;
-        ArrayList<Set<String>> setArrayList = new ArrayList<>();
         Set<String> test = new HashSet<>();
-
+        int counter = 0;
 
         for ( Map.Entry<String, String> entry : map.entrySet()) {
             String key = entry.getKey();
             String val = entry.getValue();
+            counter += 1;
 
             for (int i = 0; i < 7; i++) {
                 if (table[0][i].contains(key)) {
@@ -466,41 +456,32 @@ public class MainActivity extends AppCompatActivity implements AIListener {
                 if (table[i][columnMatch].contains(val)) {
 
                     if(map.size() > 1){
-                        if(resSet.contains(matchCheck)){
+
+                        if(counter == 1){//Get all items from first pass
+                            resSet.add(matchCheck);
+                        }
+                        if(counter > 1 && counter <= map.size() && resSet.contains(matchCheck)){
+                            temp.add(matchCheck);
+                        }
+                        //We only want to add to the final set if it matches and is the last set item to check
+                        if(temp.contains(matchCheck) && counter == map.size()){
                             test.add(matchCheck);
                         }
+
                     }
-                    resSet.add(matchCheck);
+                    else{
+                        resSet.add(matchCheck);
+                    }
                 }
             }
-
-            //setArrayList.add(resSet);
+            if(!temp.isEmpty()){
+                resSet = temp;
+            }
         }
         if(!test.isEmpty()) {
             resSet = test;
         }
         return resSet;
-
-        /*int columnMatch = 0;
-
-        //finds the column for the data we need
-        for (int i = 0; i < 7; i++){
-            if (table[0][i].contains(searchColumn)) {
-                columnMatch = i;
-                break;
-            }
-            else{
-                //TODO:return some error
-            }
-        }
-        for (int i = 0; i < 11; i++) {
-            if (table[i][columnMatch].contains(itemToSearchFor)) {
-                resSet.add(table[i][colToGetResultsFrom]);
-            }
-        }
-
-        //This should be the data we need to finish the response to the user
-        return resSet;*/
     }
 
     private void noParamError(){
@@ -511,6 +492,7 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         showResults("Your query " + query + " has returned no results");
     }
 
+    //Function to both display and say the results
     private void showResults(String response) {
         resultTextView.setText(response);
         convertTTS(response);
@@ -520,7 +502,6 @@ public class MainActivity extends AppCompatActivity implements AIListener {
     public void onError(AIError error) {
         showResults(error.toString());
         aiService.setListener(this);
-
     }
 
     @Override
