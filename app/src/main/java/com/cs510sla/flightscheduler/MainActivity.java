@@ -294,19 +294,36 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         }
     }
 
-    //TODO: Untested, need intents
     private void parseFlightStatus(Result result) {
         Set<String> resSet = new HashSet();
         Map<String, String> resMap = getParams(result);
+        String boolAnswer;
 
         if (!resMap.isEmpty()) {
-            resSet = locateInTable(resMap, STATUS);
-            if (resSet.size() == 0) {
-                noResultsError(result.getResolvedQuery());
+            //If a status param is included, we know we want to compare a column to it
+            if(resMap.containsKey(paramArray[STATUS])){
+                boolAnswer = resMap.get(paramArray[STATUS]);
+                resMap.remove(paramArray[STATUS]);
+                resSet = locateInTable(resMap, STATUS);
+                //If the provided param and matches the result in table
+                if(resSet.contains(boolAnswer)){//Kind of a hack
+                    showResults("You asked: " + result.getResolvedQuery() + "?" +
+                            "\nThe result of the query is: true");
+                }
+                else{
+                    showResults("You asked: " + result.getResolvedQuery() + "?" +
+                            "\nThe result of the query is: false");
+                }
             }
             else{
-                showResults("You asked: " + result.getResolvedQuery() + "?" +
-                        "\nThe flight status that matches your query are: " + resSet.toString());
+                resSet = locateInTable(resMap, STATUS);
+                if (resSet.size() == 0) {
+                    noResultsError(result.getResolvedQuery());
+                }
+                else{
+                    showResults("You asked: " + result.getResolvedQuery() + "?" +
+                            "\nThe flight status that matches your query are: " + resSet.toString());
+                }
             }
         }
         else{
@@ -388,7 +405,7 @@ public class MainActivity extends AppCompatActivity implements AIListener {
                     columnMatch = i;
                     break;
                 } else {
-                    //TODO:return some error
+                    showResults("Unknown parameter provided");
                 }
             }
             //Multi-parameter queries
