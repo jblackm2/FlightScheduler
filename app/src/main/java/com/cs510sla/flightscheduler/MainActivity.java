@@ -29,6 +29,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Locale;
@@ -213,8 +215,12 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         else if(action.equals("arrival_time")){
             parseArrivalsTime(result);
         }
+        else if(action.equals("next")){
+            parseNext(result);
+        }
 
     }
+
 
     //Method to get parmeter from the API.ai response, and determine which column to search in
     private Map<String, String> getParams(Result result) {
@@ -234,6 +240,54 @@ public class MainActivity extends AppCompatActivity implements AIListener {
             }
         }
         return searchMap;
+    }
+
+    private Set<String> filterTime(String now, Set results){
+        Set<String> resSet = new HashSet();
+        Object[] res = results.toArray();
+        for(int i = 0; i < res.length; i++){
+            if(now.compareTo(res[i].toString()) < 0){
+                resSet.add(res[i].toString());
+            }
+        }
+        return resSet;
+    }
+    private void parseNext(Result result) {
+        Set<String> resSet = new HashSet();
+        Map<String, String> resMap = getParams(result);
+        Calendar nowTime = Calendar.getInstance();
+        String amPM;
+        int nowHour = nowTime.get(Calendar.HOUR_OF_DAY);
+        if(nowHour < 12){
+            amPM = "AM";
+        }
+        else{
+            amPM = "PM";
+        }
+        String nowStr = nowTime.get(Calendar.HOUR) + ":" + nowTime.get(Calendar.MINUTE) + " " + amPM;
+
+        if (!resMap.isEmpty()) {
+            if(resMap.containsKey("DepartureCity")){
+                resSet = locateInTable(resMap, DEPARTURE_TIME);
+                resSet = filterTime(nowStr, resSet);
+            }
+            else{
+                resSet = locateInTable(resMap, ARRIVAL_TIME);
+                resSet = filterTime(nowStr, resSet);
+            }
+
+            if (resSet.size() == 0) {
+                noResultsError(result.getResolvedQuery());
+            }
+            else{
+                showResults("You asked: " + result.getResolvedQuery() + "?" +
+                        "\nThe flights that match your query are: " + resSet.toString());
+            }
+        }
+        else{
+            noParamError();
+        }
+
     }
 
     private void parseDeparturesCity(Result result) {
@@ -404,8 +458,6 @@ public class MainActivity extends AppCompatActivity implements AIListener {
                 if (table[0][i].contains(key)) {
                     columnMatch = i;
                     break;
-                } else {
-                    showResults("Unknown parameter provided");
                 }
             }
             //Multi-parameter queries
