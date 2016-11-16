@@ -259,11 +259,11 @@ public class MainActivity extends AppCompatActivity implements AIListener {
 
         if (!resMap.isEmpty()) {
             if(resMap.containsKey("DepartureCity")){
-                resSet = locateInTable(resMap, DEPARTURE_TIME);
+                resSet = getResultsFromTable(resMap, DEPARTURE_TIME);
                 resSet = filterTime(nowStr, resSet);
             }
             else{
-                resSet = locateInTable(resMap, ARRIVAL_TIME);
+                resSet = getResultsFromTable(resMap, ARRIVAL_TIME);
                 resSet = filterTime(nowStr, resSet);
             }
 
@@ -272,7 +272,7 @@ public class MainActivity extends AppCompatActivity implements AIListener {
             }
             else{
                 showResults("You asked: " + result.getResolvedQuery() + "?" +
-                        "\nThe flights that match your query are: " + resSet.toString());
+                        "\nThe upcoming flights are: " + resSet);
             }
         }
         else{
@@ -285,14 +285,13 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         Map<String, String> resMap = getParams(result);
 
         if (!resMap.isEmpty()) {
-
-            resSet = locateInTable(resMap, DEPARTURE_CITY);
+            resSet = getResultsFromTable(resMap, DEPARTURE_CITY);
             if (resSet.size() == 0) {
                 noResultsError(result.getResolvedQuery());
             }
             else{
                 showResults("You asked: " + result.getResolvedQuery() + "?" +
-                        "\nThe departure cities that match your query are: " + resSet.toString());
+                        "\nThe departure cities that match your query are: " + resSet);
             }
         }
         else{
@@ -305,13 +304,13 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         Map<String, String> resMap = getParams(result);
 
         if (!resMap.isEmpty()) {
-            resSet = locateInTable(resMap, DEPARTURE_TIME);
+            resSet = getResultsFromTable(resMap, DEPARTURE_TIME);
             if (resSet.size() == 0) {
                 noResultsError(result.getResolvedQuery());
             }
             else{
                 showResults("You asked: " + result.getResolvedQuery() + "?" +
-                        "\nThe flight departure time that matches your query is: " + resSet.toString());
+                        "\nThe flight departure time that matches your query is: " + resSet);
             }
         }
         else{
@@ -324,13 +323,13 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         Map<String, String> resMap = getParams(result);
 
         if (!resMap.isEmpty()) {
-            resSet = locateInTable(resMap, ARRIVAL_TIME);
+            resSet = getResultsFromTable(resMap, ARRIVAL_TIME);
             if (resSet.size() == 0) {
                 noResultsError(result.getResolvedQuery());
             }
             else{
                 showResults("You asked: " + result.getResolvedQuery() + "?" +
-                        "\nThe flight arrival time that matches your query is: " + resSet.toString());
+                        "\nThe flight arrival time that matches your query is: " + resSet);
             }
         }
         else{
@@ -348,7 +347,7 @@ public class MainActivity extends AppCompatActivity implements AIListener {
             if(resMap.containsKey(paramArray[STATUS])){
                 boolAnswer = resMap.get(paramArray[STATUS]);
                 resMap.remove(paramArray[STATUS]);
-                resSet = locateInTable(resMap, STATUS);
+                resSet = getResultsFromTable(resMap, STATUS);
                 //If the provided param and matches the result in table
                 if(resSet.contains(boolAnswer)){//Kind of a hack
                     showResults("You asked: " + result.getResolvedQuery() + "?" +
@@ -360,14 +359,13 @@ public class MainActivity extends AppCompatActivity implements AIListener {
                 }
             }
             else{
-                //resSet = locateInTable(resMap, STATUS);
-                resSet = statusSpecial(resMap, STATUS);
+                resSet = getResultsFromTable(resMap, STATUS);
                 if (resSet.size() == 0) {
                     noResultsError(result.getResolvedQuery());
                 }
                 else{
                     showResults("You asked: " + result.getResolvedQuery() + "?" +
-                            "\nThe flight status that matches your query are: " + resSet.toString());
+                            "\nThe flight status that matches your query are: " + resSet);
                 }
             }
         }
@@ -381,13 +379,13 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         Map<String, String> resMap = getParams(result);
 
         if (!resMap.isEmpty()) {
-            resSet = locateInTable(resMap, ARRIVAL_CITY);
+            resSet = getResultsFromTable(resMap, ARRIVAL_CITY);
             if (resSet.size() == 0) {
                 noResultsError(result.getResolvedQuery());
             }
             else{
                 showResults("You asked: " + result.getResolvedQuery() + "?" +
-                        "\nThe arrival cities that match your query are: " + resSet.toString());
+                        "\nThe arrival cities that match your query are: " + resSet);
             }
         }
         else{
@@ -400,13 +398,13 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         Map<String, String> resMap = getParams(result);
 
         if (!resMap.isEmpty()) {
-            resSet = locateInTable(resMap, AIRLINE);
+            resSet = getResultsFromTable(resMap, AIRLINE);
             if (resSet.size() == 0) {
                 noResultsError(result.getResolvedQuery());
             }
             else{
                 showResults("You asked: " + result.getResolvedQuery() + "?" +
-                        "\nThe airlines that match your query are: " + resSet.toString());
+                        "\nThe airlines that match your query are: " + resSet);
             }
         }
         else{
@@ -419,13 +417,13 @@ public class MainActivity extends AppCompatActivity implements AIListener {
         Map<String, String> resMap = getParams(result);
 
         if (!resMap.isEmpty()) {
-            resSet = locateInTable(resMap, FLIGHT_NUMBER);
+            resSet = getResultsFromTable(resMap, FLIGHT_NUMBER);
             if (resSet.size() == 0) {
                 noResultsError(result.getResolvedQuery());
             }
             else{
                 showResults("You asked: " + result.getResolvedQuery() + "?" +
-                        "\nThe flight numbers that match your query are: " + resSet.toString());
+                        "\nThe flight numbers that match your query are: " + resSet);
             }
         }
         else{
@@ -434,9 +432,9 @@ public class MainActivity extends AppCompatActivity implements AIListener {
 
     }
 
-    private Set<String> statusSpecial(Map<String, String> map, int colToGetResultsFrom){
+    private Set<String> getResultsFromTable(Map<String, String> map, int colToGetResultsFrom){
         Set<String> resSet = new HashSet<>();
-        ArrayList columns = new ArrayList<>();
+        ArrayList<Integer> columns = new ArrayList<>();
         ArrayList rows = new ArrayList();
         for ( Map.Entry<String, String> entry : map.entrySet()) {
             String key = entry.getKey();
@@ -460,66 +458,9 @@ public class MainActivity extends AppCompatActivity implements AIListener {
             int duplicateCheck = 0;
             duplicateCheck = Collections.frequency(rows,rows.get(i));
 
-            if (duplicateCheck > 1 || map.size() == 1) {
+            if (duplicateCheck == map.size()) {
                 resSet.add(table[(int) rows.get(i)][colToGetResultsFrom]);
             }
-        }
-
-        return resSet;
-    }
-
-    private Set<String> locateInTable(Map<String, String> map, int colToGetResultsFrom) {
-        Set<String> resSet = new HashSet<>();
-        Set<String> temp = new HashSet();
-        int columnMatch = 0;
-        Set<String> test = new HashSet<>();
-        int counter = 0;
-
-        for ( Map.Entry<String, String> entry : map.entrySet()) {
-            String key = entry.getKey();
-            String val = entry.getValue();
-            counter += 1;
-
-            for (int i = 0; i < 7; i++) {
-                if (table[0][i].contains(key)) {
-                    columnMatch = i;
-                    break;
-                }
-            }
-            //Multi-parameter queries
-            for (int i = 0; i < 11; i++) {
-                String matchCheck = table[i][colToGetResultsFrom];
-                if (table[i][columnMatch].contains(val)) {
-
-                    if(map.size() > 1){
-
-                        if(counter == 1){//Get all items from first pass
-                            resSet.add(matchCheck);
-                        }
-                        if(counter > 1 && counter <= map.size() && resSet.contains(matchCheck)){
-                            temp.add(matchCheck);
-                        }
-                        //We only want to add to the final set if it matches and is the last set item to check
-                        if(temp.contains(matchCheck) && counter == map.size()){
-                            test.add(matchCheck);
-                        }
-
-                    }
-                    else{
-                        resSet.add(matchCheck);
-                    }
-                }
-            }
-            //So that in a 3 param query, the first filtered set becomes the new set to check against
-            if(!temp.isEmpty()){
-                resSet = temp;
-            }
-        }/*
-        if(!test.isEmpty()) {
-            resSet = test;
-        }*/
-        if(map.size() > 1){
-            resSet = test;
         }
         return resSet;
     }
